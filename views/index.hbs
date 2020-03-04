@@ -1,0 +1,131 @@
+<script>
+    //CONSTANTS
+    const API_KEY = 'AIzaSyCg21I3rqE2TTvKc58du6dOerUAr3bp8qI';
+    const LAT = 41.3976981;
+    const LNG = 2.1902946;
+    const LAT_LNG = {lat: LAT, lng: LNG};
+</script>
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCg21I3rqE2TTvKc58du6dOerUAr3bp8qI&callback=initMap&libraries=places"></script>
+
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .map {
+        height: 300px;
+        width: 400px;
+
+    }
+    .block {
+        width:400px;
+        float:left;
+        margin: 20px;
+    }
+</style>
+<h1>Testeo con la API de google MAPS</h1>
+
+<div class="block">
+    <h2>Mapa con puntero</h2>
+    <div id="map1" class="map"></div>
+</div>
+<div class="block">
+    <h2>Mapa sin puntero</h2>
+    <div id="map2" class="map"></div>
+</div>
+<div class="block">
+    <h2>Obtener coordenadas según dirección</h2>
+    <input type="text" id="direction">
+    <p>Para mejor ubicación 'nombre de la calle, ciudad'</p>
+    <div id="coords"></div>
+</div>
+<div class="block">
+    <h2>Mostrar mapa segun dirección del input</h2>
+    <div id="map3" class="map"></div>
+</div>
+<div class="block">
+    <h2>Mostrar superpermercados segun dirección del input</h2>
+    <div id="map4" class="map"></div>
+</div>
+
+<script>
+    function initMap() {
+        //mapa con puntero
+        var map1 = new google.maps.Map(document.getElementById('map1'), {
+            zoom: 17,
+            center: LAT_LNG,
+            disableDefaultUI: true,
+        });
+        new google.maps.Marker({
+            position: LAT_LNG,
+            map: map1,
+            title: 'Hello World!'
+        });
+
+        //mapa sin puntero
+        var map2 = new google.maps.Map(document.getElementById('map2'), {
+            zoom: 17,
+            center: LAT_LNG,
+            disableDefaultUI: true,
+        });
+
+        //Obtener coordenadas según dirección
+        document.querySelector('#direction').addEventListener('keypress', function () {
+            var geocoder = new google.maps.Geocoder();
+            geocoder.geocode({
+                "address": this.value,
+                "region": 'es'
+            }, function (results) {
+                document.querySelector('#coords').innerHTML = `LAT : ${results[0].geometry.location.lat()}, LNG : ${results[0].geometry.location.lng()}`; //LatLng
+                const newLatLng = {lat: results[0].geometry.location.lat(), lng: results[0].geometry.location.lng()};
+                new google.maps.Map(document.getElementById('map3'), {
+                    zoom: 17,
+                    center: newLatLng,
+                    disableDefaultUI: true,
+                });
+
+                //supermercados
+                var request = {
+                    location: newLatLng,
+                    radius: 500,
+                    types: ['supermarket']
+                };
+                var map4 = new google.maps.Map(document.getElementById('map4'), {
+                    zoom: 17,
+                    center: newLatLng,
+                    disableDefaultUI: true,
+
+                });
+                infowindow = new google.maps.InfoWindow();
+
+                var service = new google.maps.places.PlacesService(map4);
+                service.nearbySearch(request, function(results, status) {
+                    if (status === google.maps.places.PlacesServiceStatus.OK) {
+                        for (var i = 0; i < results.length; i++) {
+                            crearMarcador(results[i]);
+                            console.log('a');
+                        }
+                    }
+                });
+                function crearMarcador(place) {
+                    // Creamos un marcador
+                    var marker = new google.maps.Marker({
+                        map: map4,
+                        position: place.geometry.location
+                    });
+                    google.maps.event.addListener(marker, 'click', function() {
+                        infowindow.setContent(place.name);
+                        infowindow.open(map4, this);
+                    });
+                }
+
+            })
+
+        });
+
+    }
+
+</script>
